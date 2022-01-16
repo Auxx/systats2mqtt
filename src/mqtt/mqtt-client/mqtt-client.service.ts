@@ -1,4 +1,4 @@
-import { BeforeApplicationShutdown, Injectable, OnApplicationShutdown } from '@nestjs/common';
+import { BeforeApplicationShutdown, Injectable } from '@nestjs/common';
 
 import { connect, IClientOptions, MqttClient } from 'mqtt';
 
@@ -11,6 +11,7 @@ import {
   autoRegistration,
   AutoRegistrationEntity,
   autoRegistryTopic,
+  megabyteDivider,
   MqttClientConfig,
   MqttClientMessage,
   pathReplacer,
@@ -72,6 +73,17 @@ export class MqttClientService implements BeforeApplicationShutdown {
     this.publish(this.getTopicPath('cpu/load/irq'), data.currentLoadIrq.toFixed(2));
   };
 
+  publishMemLoad = (data: Systeminformation.MemData) => {
+    if (!autoRegistration.memLoad.registered) {
+      this.registerMemLoad();
+    }
+
+    this.publish(this.getTopicPath('mem/load/total'), (data.total / megabyteDivider).toFixed(0));
+    this.publish(this.getTopicPath('mem/load/free'), (data.free / megabyteDivider).toFixed(0));
+    this.publish(this.getTopicPath('mem/load/used'), (data.used / megabyteDivider).toFixed(0));
+    this.publish(this.getTopicPath('mem/load/usage'), (data.used / data.total * 100).toFixed(2));
+  };
+
   publishCpuData = (data: Systeminformation.CpuData) => {
     this.publish(this.getTopicPath('cpu/info/brand'), data.brand);
     this.publish(this.getTopicPath('cpu/info/vendor'), data.vendor);
@@ -79,6 +91,15 @@ export class MqttClientService implements BeforeApplicationShutdown {
     this.publish(this.getTopicPath('cpu/info/cores'), data.cores.toString());
     this.publish(this.getTopicPath('cpu/info/physicalCores'), data.physicalCores.toString());
     this.publish(this.getTopicPath('cpu/info/processors'), data.processors.toString());
+  };
+
+  private registerMemLoad = () => {
+    autoRegistration.memLoad.registered = true;
+
+    autoRegistration.memLoad.entities
+      .forEach(entity => this.publish(
+        this.getRegistryPath(entity.topic),
+        JSON.stringify(this.generateRegistration(entity))));
   };
 
   private registerCpuLoad = () => {

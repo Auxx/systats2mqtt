@@ -37,6 +37,8 @@ export const publishOpts: IClientPublishOptions = {
   qos: 0
 };
 
+export const megabyteDivider = 1024 * 1024;
+
 export const autoRegistryTopic = 'homeassistant/sensor/systats';
 
 export const autoRegistration: Record<string, AutoRegistration> = {
@@ -96,6 +98,48 @@ export const autoRegistration: Record<string, AutoRegistration> = {
         deviceId: 'cpu-load',
         deviceName: 'CPU Load',
         deviceModel: 'CPU Load Monitor'
+      }
+    ]
+  },
+
+  memLoad: {
+    registered: false,
+    entities: [
+      {
+        unit: 'MB',
+        icon: 'mdi:memory',
+        topic: 'mem/load/total',
+        sensorName: 'Total Memory',
+        deviceId: 'mem-load',
+        deviceName: 'Memory',
+        deviceModel: 'Memory Monitor'
+      },
+      {
+        unit: 'MB',
+        icon: 'mdi:memory',
+        topic: 'mem/load/free',
+        sensorName: 'Free Memory',
+        deviceId: 'mem-load',
+        deviceName: 'Memory',
+        deviceModel: 'Memory Monitor'
+      },
+      {
+        unit: 'MB',
+        icon: 'mdi:memory',
+        topic: 'mem/load/used',
+        sensorName: 'Memory Used',
+        deviceId: 'mem-load',
+        deviceName: 'Memory',
+        deviceModel: 'Memory Monitor'
+      },
+      {
+        unit: '%',
+        icon: 'mdi:memory',
+        topic: 'mem/load/usage',
+        sensorName: 'Memory Usage',
+        deviceId: 'mem-load',
+        deviceName: 'Memory',
+        deviceModel: 'Memory Monitor'
       }
     ]
   }

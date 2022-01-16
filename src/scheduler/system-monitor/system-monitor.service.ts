@@ -40,7 +40,7 @@ export class SystemMonitorService {
     }
 
     if (this.config.monitorMemLoad) {
-      mem().then(info => console.log(info));
+      mem().then(this.mqttClient.publishMemLoad);
     }
 
     // if (this.config.monitorBattery) {
