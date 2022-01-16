@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BeforeApplicationShutdown, Injectable, OnApplicationShutdown } from '@nestjs/common';
 
 import { connect, IClientOptions, MqttClient } from 'mqtt';
 
@@ -19,7 +19,7 @@ import {
 } from './mqtt-client.types';
 
 @Injectable()
-export class MqttClientService {
+export class MqttClientService implements BeforeApplicationShutdown {
   private readonly config: MqttClientConfig;
 
   private readonly client: MqttClient;
@@ -53,6 +53,10 @@ export class MqttClientService {
 
     this.client = connect(this.config.url, opts);
     this.client.on('connect', this.onConnect);
+  }
+
+  beforeApplicationShutdown(signal?: string) {
+    this.publish(this.getTopicPath('lwt'), 'OFF');
   }
 
   publishCpuLoad = (data: Systeminformation.CurrentLoadData) => {
