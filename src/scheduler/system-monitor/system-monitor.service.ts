@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 
-import { cpu, currentLoad, mem } from 'systeminformation';
+import { cpu, cpuTemperature, currentLoad, mem } from 'systeminformation';
 
 import { EnvironmentService } from '../../env/environment/environment.service';
 import { MqttClientService } from '../../mqtt/mqtt-client/mqtt-client.service';
@@ -31,9 +31,9 @@ export class SystemMonitorService {
 
   @Interval(5000)
   takeSnapshot() {
-    // if (this.config.monitorCpuTemp) {
-    //   cpuTemperature().then(info => console.log(info));
-    // }
+    if (this.config.monitorCpuTemp) {
+      cpuTemperature().then(info => console.log(info));
+    }
 
     if (this.config.monitorCpuLoad) {
       currentLoad().then(this.mqttClient.publishCpuLoad);
@@ -46,7 +46,7 @@ export class SystemMonitorService {
     // if (this.config.monitorBattery) {
     //   battery().then(info => console.log(info));
     // }
-    //
+
     // if (this.config.monitorFs) {
     //   fsSize().then(info => console.log(info));
     // }
