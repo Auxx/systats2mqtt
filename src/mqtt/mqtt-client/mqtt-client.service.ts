@@ -7,7 +7,16 @@ import { BehaviorSubject, take } from 'rxjs';
 import { Systeminformation } from 'systeminformation';
 
 import { EnvironmentService } from '../../env/environment/environment.service';
-import { MqttClientConfig, MqttClientMessage, publishOpts, topicPathSeparator } from './mqtt-client.types';
+import {
+  autoRegistration,
+  AutoRegistrationEntity,
+  autoRegistryTopic,
+  MqttClientConfig,
+  MqttClientMessage,
+  pathReplacer,
+  publishOpts,
+  topicPathSeparator
+} from './mqtt-client.types';
 
 @Injectable()
 export class MqttClientService {
@@ -47,6 +56,10 @@ export class MqttClientService {
   }
 
   publishCpuLoad = (data: Systeminformation.CurrentLoadData) => {
+    if (!autoRegistration.cpuLoad.registered) {
+      this.registerCpuLoad();
+    }
+
     this.publish(this.getTopicPath('cpu/load/total'), data.currentLoad.toFixed(2));
     this.publish(this.getTopicPath('cpu/load/user'), data.currentLoadUser.toFixed(2));
     this.publish(this.getTopicPath('cpu/load/system'), data.currentLoadSystem.toFixed(2));
@@ -55,14 +68,42 @@ export class MqttClientService {
     this.publish(this.getTopicPath('cpu/load/irq'), data.currentLoadIrq.toFixed(2));
   };
 
-  publishCpuData=(data:Systeminformation.CpuData)=>{
+  publishCpuData = (data: Systeminformation.CpuData) => {
     this.publish(this.getTopicPath('cpu/info/brand'), data.brand);
     this.publish(this.getTopicPath('cpu/info/vendor'), data.vendor);
     this.publish(this.getTopicPath('cpu/info/speed'), data.speed.toFixed(2));
     this.publish(this.getTopicPath('cpu/info/cores'), data.cores.toString());
     this.publish(this.getTopicPath('cpu/info/physicalCores'), data.physicalCores.toString());
     this.publish(this.getTopicPath('cpu/info/processors'), data.processors.toString());
-  }
+  };
+
+  private registerCpuLoad = () => {
+    autoRegistration.cpuLoad.registered = true;
+
+    autoRegistration.cpuLoad.entities
+      .forEach(entity => this.publish(
+        this.getRegistryPath(entity.topic),
+        JSON.stringify(this.generateRegistration(entity))));
+  };
+
+  private generateRegistration = (entity: AutoRegistrationEntity) => {
+    return {
+      unit_of_measurement: entity.unit,
+      icon: entity.icon,
+      availability_topic: this.getTopicPath('lwt'),
+      state_topic: this.getTopicPath(entity.topic),
+      name: entity.sensorName,
+      unique_id: this.getRegistryId(entity.topic),
+      payload_available: 'ON',
+      payload_not_available: 'OFF',
+      device: {
+        identifiers: [ `${ this.config.id }-${ entity.deviceId }` ],
+        name: `${ entity.deviceName } (${ this.config.id })`,
+        model: entity.deviceModel,
+        manufacturer: 'systats2mqtt'
+      }
+    };
+  };
 
   private publish = (topic: string, payload: string) => {
     if (this.connected) {
@@ -81,6 +122,8 @@ export class MqttClientService {
         this.client.unsubscribe('presence');
         this.connected = true;
 
+        this.publish(this.getTopicPath('lwt'), 'ON');
+
         this.buffer$
           .pipe(take(1))
           .subscribe(buffer => buffer
@@ -93,5 +136,15 @@ export class MqttClientService {
       .split(topicPathSeparator)
       .concat(this.config.id.split(topicPathSeparator))
       .concat(topic.split(topicPathSeparator))
+      .join(topicPathSeparator);
+
+  private getRegistryId = (topic: string): string =>
+    `${ this.config.id.replace(pathReplacer, '_') }_${ topic.replace(pathReplacer, '_') }`;
+
+  private getRegistryPath = (topic: string): string =>
+    autoRegistryTopic
+      .split(topicPathSeparator)
+      .concat([ this.getRegistryId(topic) ])
+      .concat([ 'config' ])
       .join(topicPathSeparator);
 }
