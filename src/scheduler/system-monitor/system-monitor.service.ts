@@ -22,8 +22,6 @@ export class SystemMonitorService {
       monitorFs: env.getBool('MONITOR_FS', false)
     };
 
-    console.log(this.config);
-
     if (this.config.loadSysInfo) {
       this.loadSystemInfo();
     }
@@ -54,7 +52,7 @@ export class SystemMonitorService {
     // }
   }
 
-  loadSystemInfo() {
-    cpu().then(info => console.log(info));
-  }
+  loadSystemInfo = () => {
+    cpu().then(this.mqttClient.publishCpuData);
+  };
 }
