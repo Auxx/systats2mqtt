@@ -9,7 +9,7 @@ import { SchedulerModule } from './scheduler/scheduler.module';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({ isGlobal: true }),
     SchedulerModule
   ],
   controllers: [ AppController ],
