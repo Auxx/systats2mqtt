@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Interval } from '@nestjs/schedule';
 
-import { battery, cpu, cpuTemperature, currentLoad, fsSize, mem } from 'systeminformation';
+import { cpu, currentLoad } from 'systeminformation';
+
+import { EnvironmentService } from '../../env/environment/environment.service';
 import { MqttClientService } from '../../mqtt/mqtt-client/mqtt-client.service';
 import { SystemMonitorConfig } from './system-monitor.types';
 
@@ -10,16 +11,18 @@ import { SystemMonitorConfig } from './system-monitor.types';
 export class SystemMonitorService {
   private readonly config: SystemMonitorConfig;
 
-  constructor(private readonly configService: ConfigService,
+  constructor(private readonly env: EnvironmentService,
               private readonly mqttClient: MqttClientService) {
     this.config = {
-      loadSysInfo: configService.get('LOAD_SYS_INFO', false),
-      monitorCpuTemp: configService.get('MONITOR_CPU_TEMP', false),
-      monitorCpuLoad: configService.get('MONITOR_CPU_LOAD', true),
-      monitorMemLoad: configService.get('MONITOR_MEM_LOAD', true),
-      monitorBattery: configService.get('MONITOR_BATTERY', false),
-      monitorFs: configService.get('MONITOR_FS', false)
+      loadSysInfo: env.getBool('LOAD_SYS_INFO', false),
+      monitorCpuTemp: env.getBool('MONITOR_CPU_TEMP', false),
+      monitorCpuLoad: env.getBool('MONITOR_CPU_LOAD', true),
+      monitorMemLoad: env.getBool('MONITOR_MEM_LOAD', true),
+      monitorBattery: env.getBool('MONITOR_BATTERY', false),
+      monitorFs: env.getBool('MONITOR_FS', false)
     };
+
+    console.log(this.config);
 
     if (this.config.loadSysInfo) {
       this.loadSystemInfo();

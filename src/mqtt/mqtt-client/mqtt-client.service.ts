@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 
 import { connect, IClientOptions, MqttClient } from 'mqtt';
 
@@ -7,6 +6,7 @@ import { BehaviorSubject, take } from 'rxjs';
 
 import { Systeminformation } from 'systeminformation';
 
+import { EnvironmentService } from '../../env/environment/environment.service';
 import { MqttClientConfig, MqttClientMessage, publishOpts, topicPathSeparator } from './mqtt-client.types';
 
 @Injectable()
@@ -19,13 +19,13 @@ export class MqttClientService {
 
   private connected = false;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(private readonly env: EnvironmentService) {
     this.config = {
-      url: configService.get('MQTT_URL', ''),
-      user: configService.get('MQTT_USER', ''),
-      pass: configService.get('MQTT_PASS', ''),
-      id: configService.get('MQTT_INSTANCE_ID', 'pc'),
-      prefix: configService.get('MQTT_TOPIC_PREFIX', 'systats')
+      url: env.getString('MQTT_URL', ''),
+      user: env.getString('MQTT_USER', ''),
+      pass: env.getString('MQTT_PASS', ''),
+      id: env.getString('MQTT_INSTANCE_ID', 'pc'),
+      prefix: env.getString('MQTT_TOPIC_PREFIX', 'systats')
     };
 
     if (this.config.url.trim().length === 0) {
