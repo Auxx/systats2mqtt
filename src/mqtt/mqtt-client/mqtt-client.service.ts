@@ -55,6 +55,15 @@ export class MqttClientService {
     this.publish(this.getTopicPath('cpu/load/irq'), data.currentLoadIrq.toFixed(2));
   };
 
+  publishCpuData=(data:Systeminformation.CpuData)=>{
+    this.publish(this.getTopicPath('cpu/info/brand'), data.brand);
+    this.publish(this.getTopicPath('cpu/info/vendor'), data.vendor);
+    this.publish(this.getTopicPath('cpu/info/speed'), data.speed.toFixed(2));
+    this.publish(this.getTopicPath('cpu/info/cores'), data.cores.toString());
+    this.publish(this.getTopicPath('cpu/info/physicalCores'), data.physicalCores.toString());
+    this.publish(this.getTopicPath('cpu/info/processors'), data.processors.toString());
+  }
+
   private publish = (topic: string, payload: string) => {
     if (this.connected) {
       this.client.publish(topic, payload, publishOpts);
@@ -75,7 +84,7 @@ export class MqttClientService {
         this.buffer$
           .pipe(take(1))
           .subscribe(buffer => buffer
-            .forEach(v => this.client.publish(v.topic, v.payload, publishOpts)));
+            .forEach(v => this.publish(v.topic, v.payload)));
       }
     });
 
